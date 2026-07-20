@@ -10,8 +10,7 @@ RSpec.describe "Webhooks", type: :request do
       {
         partner_user_id: "cust_123",
         activity_type: "signup",
-        external_id: "evt_001",
-        occurred_at: Time.current.iso8601
+        external_id: "evt_001"
       }
     end
 
