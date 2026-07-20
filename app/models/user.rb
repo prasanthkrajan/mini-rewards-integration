@@ -7,6 +7,6 @@ class User < ApplicationRecord
   validates :password, presence: true, length: { minimum: 6 }, unless: :persisted?
 
   def balance
-    transactions.sum(:points_delta).to_i
+    transactions.sum(:points_delta).to_f.round.to_i
   end
 end

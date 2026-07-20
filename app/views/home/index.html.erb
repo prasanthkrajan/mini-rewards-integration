@@ -266,8 +266,8 @@
       if (!response.ok) throw new Error('Failed to load balance');
 
       const data = await response.json();
-      currentBalance = data.balance;
-      document.getElementById('balanceValue').textContent = data.balance;
+      currentBalance = Number(data.balance);
+      document.getElementById('balanceValue').textContent = currentBalance;
     } catch (error) {
       showMessage(`Error loading balance: ${error.message}`, 'error');
     }
@@ -295,15 +295,16 @@
     }
 
     rewards.forEach(reward => {
-      const canRedeem = currentBalance >= reward.points_required;
+      const requiredPoints = Number(reward.points_required);
+      const canRedeem = currentBalance >= requiredPoints;
       const card = document.createElement('div');
       card.className = 'reward-card';
       card.innerHTML = `
         <h3>${reward.name}</h3>
         <p>${reward.description || 'A great reward'}</p>
-        <div class="reward-cost">${reward.points_required} points</div>
+        <div class="reward-cost">${requiredPoints} points</div>
         <button
-          onclick="redeemReward(${reward.id}, '${reward.name}', ${reward.points_required})"
+          onclick="redeemReward(${reward.id}, '${reward.name}', ${requiredPoints})"
           ${!canRedeem ? 'disabled' : ''}
         >
           ${canRedeem ? 'Redeem' : 'Not Enough Points'}
@@ -431,7 +432,11 @@
   }
 
   // Load data on page load
-  loadBalance();
-  loadRewards();
-  loadTransactions(1);
+  async function initializePage() {
+    await loadBalance();
+    await loadRewards();
+    await loadTransactions(1);
+  }
+
+  initializePage();
 </script>

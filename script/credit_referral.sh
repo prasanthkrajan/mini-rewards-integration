@@ -14,8 +14,8 @@ API_BASE="http://${HOST}"
 # Test Partner API Key (seeded in db/seeds.rb)
 PARTNER_API_KEY="partner_a_secret_key_123"
 
-echo "📝 Crediting referral activity for: $USER_EMAIL"
-echo "🎯 Host: $HOST"
+echo "Crediting referral activity for: $USER_EMAIL"
+echo "Host: $HOST"
 echo ""
 
 # Call the webhook endpoint with referral activity
