@@ -1,9 +1,18 @@
 module Api
   class RewardsController < ActionController::API
-    before_action :authenticate_user!, only: :redeem
+    before_action :authenticate_user!
 
     def index
-      rewards = Reward.active.map do |reward|
+      page = (params[:page] || 1).to_i
+      per_page = (params[:per_page] || 10).to_i
+      per_page = [per_page, 100].min  # Cap at 100
+
+      total_count = Reward.active.count
+      rewards = Reward.active
+                      .order(:id)
+                      .limit(per_page)
+                      .offset((page - 1) * per_page)
+                      .map do |reward|
         {
           id: reward.id,
           name: reward.name,
@@ -11,7 +20,16 @@ module Api
           points_required: reward.points_required.to_i
         }
       end
-      render json: rewards, status: 200
+
+      render json: {
+        rewards: rewards,
+        pagination: {
+          page: page,
+          per_page: per_page,
+          total_count: total_count,
+          total_pages: (total_count.to_f / per_page).ceil
+        }
+      }, status: 200
     end
 
     def redeem

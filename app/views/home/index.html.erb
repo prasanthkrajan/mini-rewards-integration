@@ -273,19 +273,24 @@
     }
   }
 
-  async function loadRewards() {
+  async function loadRewards(page = 1) {
     try {
-      const response = await fetch(`${API_BASE}/api/rewards`);
+      const params = new URLSearchParams({ page, per_page: 10 });
+      const response = await fetch(`${API_BASE}/api/rewards?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
       if (!response.ok) throw new Error('Failed to load rewards');
 
-      const rewards = await response.json();
-      displayRewards(rewards);
+      const data = await response.json();
+      displayRewards(data.rewards, data.pagination);
     } catch (error) {
       showMessage(`Error loading rewards: ${error.message}`, 'error');
     }
   }
 
-  function displayRewards(rewards) {
+  function displayRewards(rewards, pagination) {
     const rewardsList = document.getElementById('rewardsList');
     rewardsList.innerHTML = '';
 
@@ -312,6 +317,22 @@
       `;
       rewardsList.appendChild(card);
     });
+
+    // Add pagination controls
+    if (pagination && pagination.total_pages > 1) {
+      const paginationDiv = document.createElement('div');
+      paginationDiv.style.cssText = 'margin-top: 20px; text-align: center; font-size: 12px; color: #666;';
+      const pages = [];
+      if (pagination.page > 1) {
+        pages.push(`<a href="#" onclick="loadRewards(${pagination.page - 1}); return false;" style="color: #000; text-decoration: none; margin-right: 12px;">← Previous</a>`);
+      }
+      pages.push(`<span style="margin: 0 12px;">Page ${pagination.page} of ${pagination.total_pages}</span>`);
+      if (pagination.page < pagination.total_pages) {
+        pages.push(`<a href="#" onclick="loadRewards(${pagination.page + 1}); return false;" style="color: #000; text-decoration: none; margin-left: 12px;">Next →</a>`);
+      }
+      paginationDiv.innerHTML = pages.join('');
+      rewardsList.parentElement.appendChild(paginationDiv);
+    }
 
     document.getElementById('emptyState').style.display = 'none';
     document.querySelector('.rewards-section').style.display = 'block';
