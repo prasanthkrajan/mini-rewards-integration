@@ -10,7 +10,7 @@ RSpec.describe "Rewards", type: :request do
     { "Authorization" => "Bearer #{token}" }
   end
 
-  describe "GET /rewards" do
+  describe "GET /api/rewards" do
     context "with active rewards" do
       before do
         Reward.create!(name: "Free Coffee", description: "Get a free coffee", points_required: 100, active: true)
@@ -19,7 +19,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "returns all active rewards" do
-        get '/rewards'
+        get '/api/rewards'
 
         expect(response).to have_http_status(200)
         rewards = response.parsed_body
@@ -28,7 +28,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "returns reward details" do
-        get '/rewards'
+        get '/api/rewards'
 
         rewards = response.parsed_body
         coffee_reward = rewards.find { |r| r["name"] == "Free Coffee" }
@@ -41,7 +41,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "does not include inactive rewards" do
-        get '/rewards'
+        get '/api/rewards'
 
         rewards = response.parsed_body
         reward_names = rewards.map { |r| r["name"] }
@@ -51,7 +51,7 @@ RSpec.describe "Rewards", type: :request do
 
     context "with no active rewards" do
       it "returns empty array" do
-        get '/rewards'
+        get '/api/rewards'
 
         expect(response).to have_http_status(200)
         expect(response.parsed_body).to eq([])
@@ -59,7 +59,7 @@ RSpec.describe "Rewards", type: :request do
     end
   end
 
-  describe "POST /rewards/:reward_id/redeem" do
+  describe "POST /api/rewards/:reward_id/redeem" do
     let(:reward) { Reward.create!(name: "Free Coffee", description: "Get a free coffee", points_required: 100, active: true) }
     let(:inactive_reward) { Reward.create!(name: "Inactive Reward", description: "Not available", points_required: 50, active: false) }
 
@@ -77,7 +77,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "deducts points and creates a redeem transaction" do
-        post "/rewards/#{reward.id}/redeem",
+        post "/api/rewards/#{reward.id}/redeem",
           headers: auth_header_for(user)
 
         expect(response).to have_http_status(200)
@@ -99,7 +99,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "allows redeeming if balance >= points_required" do
-        post "/rewards/#{reward.id}/redeem",
+        post "/api/rewards/#{reward.id}/redeem",
           headers: auth_header_for(user)
 
         expect(response).to have_http_status(200)
@@ -107,7 +107,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "sets correct new_balance after redemption" do
-        post "/rewards/#{reward.id}/redeem",
+        post "/api/rewards/#{reward.id}/redeem",
           headers: auth_header_for(user)
 
         expect(response.parsed_body["new_balance"]).to eq(100)
@@ -128,7 +128,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "returns 422 and does not create transaction" do
-        post "/rewards/#{reward.id}/redeem",
+        post "/api/rewards/#{reward.id}/redeem",
           headers: auth_header_for(user)
 
         expect(response).to have_http_status(422)
@@ -153,7 +153,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "returns 422 with error message" do
-        post "/rewards/#{inactive_reward.id}/redeem",
+        post "/api/rewards/#{inactive_reward.id}/redeem",
           headers: auth_header_for(user)
 
         expect(response).to have_http_status(422)
@@ -178,7 +178,7 @@ RSpec.describe "Rewards", type: :request do
       end
 
       it "returns 404" do
-        post "/rewards/9999/redeem",
+        post "/api/rewards/9999/redeem",
           headers: auth_header_for(user)
 
         expect(response).to have_http_status(404)
@@ -187,7 +187,7 @@ RSpec.describe "Rewards", type: :request do
 
     context "with missing authentication" do
       it "returns 401 Unauthorized" do
-        post "/rewards/#{reward.id}/redeem"
+        post "/api/rewards/#{reward.id}/redeem"
 
         expect(response).to have_http_status(401)
       end
@@ -195,7 +195,7 @@ RSpec.describe "Rewards", type: :request do
 
     context "with invalid authentication" do
       it "returns 401 Unauthorized" do
-        post "/rewards/#{reward.id}/redeem",
+        post "/api/rewards/#{reward.id}/redeem",
           headers: { "Authorization" => "Bearer invalid_token" }
 
         expect(response).to have_http_status(401)
@@ -204,7 +204,7 @@ RSpec.describe "Rewards", type: :request do
 
     context "with zero balance user" do
       it "returns 422 with insufficient balance error" do
-        post "/rewards/#{reward.id}/redeem",
+        post "/api/rewards/#{reward.id}/redeem",
           headers: auth_header_for(user)
 
         expect(response).to have_http_status(422)

@@ -3,10 +3,10 @@ require 'rails_helper'
 RSpec.describe "Users", type: :request do
   let!(:user) { User.create!(name: "Alice", email: "alice@example.com", password: "alice123") }
 
-  describe "POST /login" do
+  describe "POST /api/login" do
     context "with valid credentials" do
       it "returns a JWT token" do
-        post '/login', params: {
+        post '/api/login', params: {
           email: "alice@example.com",
           password: "alice123"
         }
@@ -18,7 +18,7 @@ RSpec.describe "Users", type: :request do
       end
 
       it "returns user information" do
-        post '/login', params: {
+        post '/api/login', params: {
           email: "alice@example.com",
           password: "alice123"
         }
@@ -32,7 +32,7 @@ RSpec.describe "Users", type: :request do
       end
 
       it "returns a valid JWT token that can be decoded" do
-        post '/login', params: {
+        post '/api/login', params: {
           email: "alice@example.com",
           password: "alice123"
         }
@@ -45,7 +45,7 @@ RSpec.describe "Users", type: :request do
 
     context "with invalid email" do
       it "returns 401 Unauthorized" do
-        post '/login', params: {
+        post '/api/login', params: {
           email: "nonexistent@example.com",
           password: "alice123"
         }
@@ -57,7 +57,7 @@ RSpec.describe "Users", type: :request do
 
     context "with invalid password" do
       it "returns 401 Unauthorized" do
-        post '/login', params: {
+        post '/api/login', params: {
           email: "alice@example.com",
           password: "wrongpassword"
         }
@@ -69,7 +69,7 @@ RSpec.describe "Users", type: :request do
 
     context "with missing email" do
       it "returns 400 Bad Request" do
-        post '/login', params: {
+        post '/api/login', params: {
           password: "alice123"
         }
 
@@ -80,7 +80,7 @@ RSpec.describe "Users", type: :request do
 
     context "with missing password" do
       it "returns 400 Bad Request" do
-        post '/login', params: {
+        post '/api/login', params: {
           email: "alice@example.com"
         }
 

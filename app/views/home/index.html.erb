@@ -1,0 +1,271 @@
+<div class="container" style="max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); overflow: hidden;">
+  <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1 style="font-size: 28px; margin-bottom: 10px;">💰 Rewards</h1>
+      <p style="opacity: 0.9; font-size: 14px;">Earn and redeem points from your favorite partners</p>
+    </div>
+    <button
+      type="button"
+      onclick="handleLogout()"
+      style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;"
+    >
+      Logout
+    </button>
+  </header>
+
+  <div style="padding: 30px;">
+    <!-- Auth Status -->
+    <div style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #0c5460;">
+      Logged in as <strong id="userEmailDisplay">-</strong>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages"></div>
+
+    <!-- Balance Section -->
+    <div class="balance-section" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 20px; border-radius: 6px; margin-bottom: 30px; text-align: center;">
+      <h2 style="color: #666; font-size: 14px; margin-bottom: 10px;">Your Current Balance</h2>
+      <div class="balance-value" id="balanceValue" style="font-size: 48px; font-weight: bold; color: #667eea;">-</div>
+    </div>
+
+    <!-- Rewards Section -->
+    <div class="rewards-section" style="display: none;">
+      <h2 style="font-size: 18px; margin-bottom: 20px; color: #333;">Available Rewards</h2>
+      <div class="rewards-grid" id="rewardsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;"></div>
+    </div>
+
+    <div id="emptyState" class="empty-state" style="text-align: center; color: #999; padding: 40px 20px;">
+      <p style="font-size: 14px;">Loading rewards...</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .reward-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .reward-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    transform: translateY(-4px);
+  }
+
+  .reward-card h3 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .reward-card p {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+    min-height: 36px;
+  }
+
+  .reward-cost {
+    display: inline-block;
+    background: #f0f7ff;
+    color: #667eea;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .reward-card button {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .reward-card button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  .reward-card button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  .message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  @media (max-width: 600px) {
+    .rewards-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+
+<script>
+  const API_BASE = 'http://localhost:3000';
+  let authToken = localStorage.getItem('authToken');
+  let currentBalance = 0;
+
+  // Check if user is logged in
+  if (!authToken) {
+    window.location.href = '/login';
+  }
+
+  // Display user email
+  const userEmail = localStorage.getItem('userEmail');
+  if (userEmail) {
+    document.getElementById('userEmailDisplay').textContent = userEmail;
+  }
+
+  async function loadBalance() {
+    try {
+      const response = await fetch(`${API_BASE}/api/me/balance`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to load balance');
+
+      const data = await response.json();
+      currentBalance = data.balance;
+      document.getElementById('balanceValue').textContent = data.balance;
+    } catch (error) {
+      showMessage(`Error loading balance: ${error.message}`, 'error');
+    }
+  }
+
+  async function loadRewards() {
+    try {
+      const response = await fetch(`${API_BASE}/api/rewards`);
+      if (!response.ok) throw new Error('Failed to load rewards');
+
+      const rewards = await response.json();
+      displayRewards(rewards);
+    } catch (error) {
+      showMessage(`Error loading rewards: ${error.message}`, 'error');
+    }
+  }
+
+  function displayRewards(rewards) {
+    const rewardsList = document.getElementById('rewardsList');
+    rewardsList.innerHTML = '';
+
+    if (rewards.length === 0) {
+      rewardsList.innerHTML = '<p style="color: #999;">No rewards available</p>';
+      return;
+    }
+
+    rewards.forEach(reward => {
+      const canRedeem = currentBalance >= reward.points_required;
+      const card = document.createElement('div');
+      card.className = 'reward-card';
+      card.innerHTML = `
+        <h3>${reward.name}</h3>
+        <p>${reward.description || 'A great reward'}</p>
+        <div class="reward-cost">${reward.points_required} points</div>
+        <button
+          onclick="redeemReward(${reward.id}, '${reward.name}', ${reward.points_required})"
+          ${!canRedeem ? 'disabled' : ''}
+        >
+          ${canRedeem ? 'Redeem' : 'Not Enough Points'}
+        </button>
+      `;
+      rewardsList.appendChild(card);
+    });
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.querySelector('.rewards-section').style.display = 'block';
+  }
+
+  async function redeemReward(rewardId, rewardName, pointsCost) {
+    try {
+      const response = await fetch(`${API_BASE}/api/rewards/${rewardId}/redeem`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Redemption failed');
+      }
+
+      const data = await response.json();
+      showMessage(`✅ Successfully redeemed "${rewardName}"! New balance: ${data.new_balance} points`, 'success');
+
+      currentBalance = data.new_balance;
+      document.getElementById('balanceValue').textContent = data.new_balance;
+      loadRewards();
+    } catch (error) {
+      showMessage(`Error redeeming reward: ${error.message}`, 'error');
+    }
+  }
+
+  function showMessage(text, type) {
+    const messagesDiv = document.getElementById('messages');
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    message.textContent = text;
+    messagesDiv.appendChild(message);
+
+    setTimeout(() => message.remove(), 5000);
+  }
+
+  function handleLogout() {
+    localStorage.clear();
+    window.location.href = '/login';
+  }
+
+  // Load data on page load
+  loadBalance();
+  loadRewards();
+</script>

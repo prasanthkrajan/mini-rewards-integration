@@ -11,7 +11,7 @@ RSpec.describe "Me (User)", type: :request do
     { "Authorization" => "Bearer #{token}" }
   end
 
-  describe "GET /me/balance" do
+  describe "GET /api/me/balance" do
     context "with valid user authentication" do
       it "returns the user's total balance (sum of all transactions)" do
         # Create transactions for user
@@ -41,7 +41,7 @@ RSpec.describe "Me (User)", type: :request do
           kind: "redeem"
         )
 
-        get '/me/balance', headers: auth_header_for(user)
+        get '/api/me/balance', headers: auth_header_for(user)
 
         expect(response).to have_http_status(200)
         expect(response.parsed_body).to include(
@@ -51,7 +51,7 @@ RSpec.describe "Me (User)", type: :request do
       end
 
       it "returns 0 balance if user has no transactions" do
-        get '/me/balance', headers: auth_header_for(user)
+        get '/api/me/balance', headers: auth_header_for(user)
 
         expect(response).to have_http_status(200)
         expect(response.parsed_body["balance"]).to eq(0)
@@ -76,7 +76,7 @@ RSpec.describe "Me (User)", type: :request do
           kind: "earn"
         )
 
-        get '/me/balance', headers: auth_header_for(user)
+        get '/api/me/balance', headers: auth_header_for(user)
 
         expect(response).to have_http_status(200)
         expect(response.parsed_body["balance"]).to eq(100)  # Only user's balance
@@ -85,7 +85,7 @@ RSpec.describe "Me (User)", type: :request do
 
     context "with missing authentication" do
       it "returns 401 Unauthorized" do
-        get '/me/balance'
+        get '/api/me/balance'
 
         expect(response).to have_http_status(401)
       end
@@ -93,7 +93,7 @@ RSpec.describe "Me (User)", type: :request do
 
     context "with invalid authentication" do
       it "returns 401 Unauthorized" do
-        get '/me/balance', headers: { "Authorization" => "Bearer invalid_token" }
+        get '/api/me/balance', headers: { "Authorization" => "Bearer invalid_token" }
 
         expect(response).to have_http_status(401)
       end
