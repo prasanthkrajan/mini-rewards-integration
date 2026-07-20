@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_090350) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_123510) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "partner_user_mappings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "partner_id", null: false
+    t.string "partner_user_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["partner_id", "partner_user_id"], name: "index_partner_user_mappings_on_partner_id_and_partner_user_id", unique: true
+    t.index ["partner_id"], name: "index_partner_user_mappings_on_partner_id"
+    t.index ["user_id"], name: "index_partner_user_mappings_on_user_id"
+  end
 
   create_table "partners", force: :cascade do |t|
     t.string "api_key_digest", null: false
@@ -45,6 +56,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_090350) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "partner_user_mappings", "partners"
+  add_foreign_key "partner_user_mappings", "users"
   add_foreign_key "transactions", "partners"
   add_foreign_key "transactions", "users"
 end
