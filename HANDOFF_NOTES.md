@@ -15,7 +15,7 @@ A complete, production-ready rewards system: partners send activity webhooks →
 
 ### 2. Database-Enforced Idempotency
 **Decision:** UNIQUE(partner_id, user_id, external_id) constraint. Catch duplicate and return 202.
-**Why:** Thread-safe, no TOCTOU race, partner can retry safely.
+**Why:** Thread-safe, partner can retry safely.
 **Trade-off:** Partners must send external_id, but enforces best practices.
 
 ### 3. API Key Auth for Partners, JWT for Users
@@ -48,9 +48,28 @@ A complete, production-ready rewards system: partners send activity webhooks →
 **Why:** Simple, correct (always fresh after earn/redeem), fast (cache hits).
 **Trade-off:** Could optimize with Redis increment/decrement, but unnecessary for MVP.
 
+### 9. User ID Mapping: Partners Don't Know Our Internal User IDs
+**Decision:** Partners send their own user ID; we map it via PartnerUserMapping table. Never expose internal user_id to partners.
+**Why:** Security. If partner's DB is breached, attackers don't have a map of our internal user IDs. Prevents ID enumeration attacks. Decouples our schema from partners' integrations.
+**Trade-off:** Extra mapping table + lookup step. Worth it for security isolation.
+
+---
+
+## What I Intentionally Deferred
+
+**Partner State (Active/Inactive)**
+**Decision:** Not implemented; partners don't have `active` or `status` column.
+**Why:** All partners treated as active; no need to disable them yet.
+**Trade-off:** Can't revoke partner access without deleting them; add `active: boolean` column + check in webhook endpoint
+
 ---
 
 ## What I'd Do With More Time
+
+**Optimize Webhook Performance:**
+- Refactor WebhookActivityService: extract validators, make code more testable
+- Fix partner API key lookup: currently O(n) loop through all partners; add indexed `api_key` column + BCrypt digest for fast lookup
+- Add background job processing (Sidekiq) to handle thousands of webhooks/sec; webhook endpoint queues job, returns 202 immediately
 
 **Security & Production:**
 - Add rate limiting per partner (Rack::Attack)
@@ -60,17 +79,12 @@ A complete, production-ready rewards system: partners send activity webhooks →
 **Performance & Observability:**
 - Database indices on `transactions(user_id)` and `transactions(created_at)`
 - Structured JSON logging for webhooks (partner_id, status, duration)
-- Webhook delivery monitoring + replay UI
+- Webhook delivery monitoring
 
 **Business Features:**
 - Reward fulfillment (code generation, delivery to partner)
 - Partner dashboard (view transactions, manage API keys)
 - Seasonal multipliers & promotions (2x points on weekends)
-
-**Scaling (if needed):**
-- Background job processing (Sidekiq) for async webhooks
-- Multi-instance deployment (connection pooling, zero-downtime migrations)
-- Partner API (reconciliation endpoint, self-service API key rotation)
 
 ---
 
