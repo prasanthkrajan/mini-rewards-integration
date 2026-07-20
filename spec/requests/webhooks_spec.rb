@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe "Webhooks", type: :request do
   describe "POST /webhooks/activity" do
     let!(:partner) { Partner.create!(name: "Partner A", api_key_digest: BCrypt::Password.create("secret_key_123")) }
-    let!(:user) { User.create!(name: "Alice", email: "alice@example.com") }
+    let!(:user) { User.create!(name: "Alice", email: "alice@example.com", password: "alice123") }
     let!(:partner_user_mapping) { PartnerUserMapping.create!(partner: partner, user: user, partner_user_id: "cust_123") }
 
     let(:valid_payload) do
@@ -69,7 +69,7 @@ RSpec.describe "Webhooks", type: :request do
 
       it "handles duplicate external_id from same partner but different user" do
         # Create another user with same partner
-        user2 = User.create!(name: "Bob", email: "bob@example.com")
+        user2 = User.create!(name: "Bob", email: "bob@example.com", password: "bob123")
         PartnerUserMapping.create!(partner: partner, user: user2, partner_user_id: "cust_456")
 
         # First request for user 1

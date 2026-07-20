@@ -46,3 +46,4 @@ end
 gem "rspec-rails", "~> 8.0", groups: [:development, :test]
 
 gem "bcrypt", "~> 3.1"
+gem "jwt", "~> 2.7"

@@ -1,12 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe "Rewards", type: :request do
-  let!(:user) { User.create!(name: "Alice", email: "alice@example.com") }
+  let!(:user) { User.create!(name: "Alice", email: "alice@example.com", password: "alice123") }
   let!(:partner) { Partner.create!(name: "Partner A", api_key_digest: BCrypt::Password.create("secret")) }
 
   # Helper to authenticate as a user
   def auth_header_for(user)
-    { "Authorization" => "Bearer user_#{user.id}" }
+    token = JwtService.encode(user.id)
+    { "Authorization" => "Bearer #{token}" }
   end
 
   describe "GET /rewards" do

@@ -29,16 +29,18 @@ class RewardsController < ActionController::API
   private
 
   def current_user
-    @current_user ||= User.find_by(id: user_id_from_token)
+    @current_user ||= User.find_by(id: user_id_from_jwt)
   end
 
   def authenticate_user!
     render json: { error: "Unauthorized" }, status: 401 unless current_user
   end
 
-  def user_id_from_token
+  def user_id_from_jwt
     token = request.headers["Authorization"]&.sub(/^Bearer /, "")
-    match = token&.match(/^user_(\d+)$/)
-    match[1].to_i if match
+    return nil unless token.present?
+
+    decoded = JwtService.decode(token)
+    decoded["user_id"] if decoded
   end
 end

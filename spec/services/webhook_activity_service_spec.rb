@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe WebhookActivityService do
   let!(:partner) { Partner.create!(name: "Test Partner", api_key_digest: BCrypt::Password.create("test_key")) }
-  let!(:user) { User.create!(name: "Test User", email: "test@example.com") }
+  let!(:user) { User.create!(name: "Test User", email: "test@example.com", password: "test123") }
 
   describe ".process" do
     context "with valid flat activity (signup)" do
@@ -114,7 +114,7 @@ RSpec.describe WebhookActivityService do
       end
 
       it "allows different users to have the same external_id from the same partner" do
-        user2 = User.create!(name: "User 2", email: "user2@example.com")
+        user2 = User.create!(name: "User 2", email: "user2@example.com", password: "user2123")
 
         # First user
         result1 = described_class.process(partner: partner, user: user, payload: payload)
