@@ -1,7 +1,7 @@
 class CreateTransactions < ActiveRecord::Migration[8.1]
   def change
     create_table :transactions do |t|
-      t.references :partner, null: false, foreign_key: true
+      t.references :partner, null: true, foreign_key: true
       t.references :user, null: false, foreign_key: true
       t.decimal :points_delta, null: false
       t.decimal :amount
