@@ -182,6 +182,6 @@ Expected response:
 Current hardcoded points rules for activities:
 
 - `signup` → 100 points (flat)
-- `referral` → 100 points (flat)
+- `referral` → 50 points (flat)
 - `purchase` → 1 point per $1 (requires `amount` field)
 
