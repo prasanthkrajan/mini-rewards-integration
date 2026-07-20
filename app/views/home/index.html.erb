@@ -337,7 +337,8 @@
 
       currentBalance = data.new_balance;
       document.getElementById('balanceValue').textContent = data.new_balance;
-      loadRewards();
+      await loadRewards();
+      await loadTransactions(1);
     } catch (error) {
       showMessage(`Error redeeming reward: ${error.message}`, 'error');
     }
