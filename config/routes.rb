@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   # Web UI routes
   get '/login', to: 'home#login'
   get '/home', to: 'home#index'
-  root to: redirect('/login')
+  root to: 'home#root'
 
   # API routes
   namespace :api do

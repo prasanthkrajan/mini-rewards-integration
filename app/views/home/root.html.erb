@@ -1,0 +1,8 @@
+<script>
+  // If already logged in, redirect to home
+  if (localStorage.getItem('authToken')) {
+    window.location.href = '/home';
+  } else {
+    window.location.href = '/login';
+  }
+</script>
