@@ -101,3 +101,28 @@ A complete, production-ready rewards system: partners send activity webhooks →
 - Network failures (not simulated, but HTTP errors tested)
 - UI integration (minimal UI, manual testing sufficient)
 
+---
+
+## What Breaks & How We Fix It
+
+**Cache Crash**
+- Effect: Balance queries fall back to SUM (slight latency spike)
+- Detection: Monitor cache hit ratio; alert if below 80%
+- Fix: Automatic (no code change; cache.read returns nil, triggers recalculation)
+
+**Webhook Throughput Spike (1000+ req/sec)**
+- Bottleneck: Synchronous processing in controller blocks; DB connection pool exhausts
+- Fix: Add Sidekiq queue (webhook endpoint enqueues job, returns 202 immediately)
+- Timeline: 2-3 hours to implement, no breaking changes
+
+**Partner API Key Lookup Slow**
+- Current: O(n) loop through all partners; bottleneck at 100+ partners
+- Signal: Look at webhook endpoint latency; if > 100ms, investigate partner count
+- Fix: Add indexed `api_key` column; benchmark shows 10x speedup (1 hour to implement)
+
+**Partner Requests Revoked User**
+- Current: No way to revoke access without deleting partner
+- Fix: Add `active: boolean` to Partner; check in webhook before processing
+- Timeline: 10 minutes; low risk; backwards compatible
+
+
