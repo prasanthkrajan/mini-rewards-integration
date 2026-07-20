@@ -34,6 +34,41 @@
       <div class="rewards-grid" id="rewardsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;"></div>
     </div>
 
+    <!-- Transaction History Section -->
+    <div class="transactions-section" style="display: none; margin-top: 40px; border-top: 2px solid #eee; padding-top: 30px;">
+      <h2 style="font-size: 18px; margin-bottom: 20px; color: #333;">📋 Transaction History</h2>
+
+      <div style="margin-bottom: 20px;">
+        <label style="font-size: 13px; color: #666; margin-right: 15px;">
+          Filter by type:
+          <select id="transactionKindFilter" onchange="loadTransactions(1)" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; margin-left: 8px;">
+            <option value="">All</option>
+            <option value="earn">Earned</option>
+            <option value="redeem">Redeemed</option>
+          </select>
+        </label>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table id="transactionsTable" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead style="background: #f5f5f5;">
+            <tr>
+              <th style="padding: 12px 8px; text-align: left; border-bottom: 1px solid #ddd; font-weight: 600;">Date</th>
+              <th style="padding: 12px 8px; text-align: left; border-bottom: 1px solid #ddd; font-weight: 600;">Type</th>
+              <th style="padding: 12px 8px; text-align: left; border-bottom: 1px solid #ddd; font-weight: 600;">Activity</th>
+              <th style="padding: 12px 8px; text-align: right; border-bottom: 1px solid #ddd; font-weight: 600;">Points</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsBody">
+            <tr><td colspan="4" style="padding: 20px; text-align: center; color: #999;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div id="transactionsPagination" style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;"></div>
+    </div>
+
     <div id="emptyState" class="empty-state" style="text-align: center; color: #999; padding: 40px 20px;">
       <p style="font-size: 14px;">Loading rewards...</p>
     </div>
@@ -265,7 +300,84 @@
     window.location.href = '/login';
   }
 
+  async function loadTransactions(page = 1) {
+    try {
+      const kind = document.getElementById('transactionKindFilter').value;
+      const params = new URLSearchParams({ page });
+      if (kind) params.append('kind', kind);
+
+      const response = await fetch(`${API_BASE}/api/me/transactions?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to load transactions');
+
+      const data = await response.json();
+      displayTransactions(data.transactions);
+      displayPagination(data.pagination, page);
+
+      document.querySelector('.transactions-section').style.display = 'block';
+    } catch (error) {
+      showMessage(`Error loading transactions: ${error.message}`, 'error');
+    }
+  }
+
+  function displayTransactions(transactions) {
+    const tbody = document.getElementById('transactionsBody');
+    tbody.innerHTML = '';
+
+    if (transactions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #999;">No transactions yet</td></tr>';
+      return;
+    }
+
+    transactions.forEach(tx => {
+      const date = new Date(tx.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      const points = tx.points_delta;
+      const pointsColor = points > 0 ? '#28a745' : '#dc3545';
+      const pointsSign = points > 0 ? '+' : '';
+      const type = tx.kind === 'earn' ? '➕ Earned' : '➖ Redeemed';
+      const activity = tx.activity_type.replace(/_/g, ' ');
+
+      const row = document.createElement('tr');
+      row.style.borderBottom = '1px solid #eee';
+      row.innerHTML = `
+        <td style="padding: 12px 8px;">${date}</td>
+        <td style="padding: 12px 8px; font-weight: 600; color: ${pointsColor};">${type}</td>
+        <td style="padding: 12px 8px; color: #666; text-transform: capitalize;">${activity}</td>
+        <td style="padding: 12px 8px; text-align: right; font-weight: 600; color: ${pointsColor};">${pointsSign}${points}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  function displayPagination(pagination, currentPage) {
+    const container = document.getElementById('transactionsPagination');
+    container.innerHTML = '';
+
+    if (pagination.total_pages <= 1) {
+      container.innerHTML = `<p style="margin: 0;">Showing ${pagination.total_count} transaction${pagination.total_count !== 1 ? 's' : ''}</p>`;
+      return;
+    }
+
+    const pages = [];
+    if (currentPage > 1) {
+      pages.push(`<a href="#" onclick="loadTransactions(${currentPage - 1}); return false;" style="color: #667eea; text-decoration: none; margin-right: 10px;">← Previous</a>`);
+    }
+
+    pages.push(`<span style="margin: 0 10px;">Page ${currentPage} of ${pagination.total_pages}</span>`);
+
+    if (currentPage < pagination.total_pages) {
+      pages.push(`<a href="#" onclick="loadTransactions(${currentPage + 1}); return false;" style="color: #667eea; text-decoration: none; margin-left: 10px;">Next →</a>`);
+    }
+
+    container.innerHTML = pages.join('');
+  }
+
   // Load data on page load
   loadBalance();
   loadRewards();
+  loadTransactions(1);
 </script>

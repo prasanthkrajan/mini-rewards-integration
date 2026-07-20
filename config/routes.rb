@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   namespace :api do
     post '/login', to: 'users#login'
     get '/me/balance', to: 'me#balance'
+    get '/me/transactions', to: 'me#transactions'
     get '/rewards', to: 'rewards#index'
     post '/rewards/:reward_id/redeem', to: 'rewards#redeem'
   end
