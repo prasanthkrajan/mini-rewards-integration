@@ -4,6 +4,7 @@ RSpec.describe "Webhooks", type: :request do
   describe "POST /webhooks/activity" do
     let!(:partner) { Partner.create!(name: "Partner A", api_key_digest: BCrypt::Password.create("secret_key_123")) }
     let!(:user) { User.create!(name: "Alice", email: "alice@example.com") }
+    let!(:partner_user_mapping) { PartnerUserMapping.create!(partner: partner, user: user, partner_user_id: "cust_123") }
     
     let(:valid_payload) do
       {
