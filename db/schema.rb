@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_152359) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_172254) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -37,8 +37,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_152359) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.datetime "expires_at"
+    t.integer "inventory"
     t.string "name", null: false
     t.decimal "points_required", precision: 10, scale: 2, null: false
+    t.integer "redeemed_count"
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_rewards_on_name", unique: true
   end
