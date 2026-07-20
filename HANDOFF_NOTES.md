@@ -50,19 +50,6 @@ A complete, production-ready rewards system: partners send activity webhooks →
 
 ---
 
-## What I Intentionally Deferred
-
-| Item | Why | Post-MVP Effort |
-|------|-----|-----------------|
-| Rate limiting | No abuse yet; low priority | Low (Rack::Attack gem) |
-| Performance indices | SUM queries fast on small dataset | Low (3 migrations) |
-| Balance caching (Redis) | Rails memory cache sufficient | Medium (Redis setup) |
-| Reward fulfillment | No code generation logic | High (add code gen + delivery) |
-| Production JWT auth | Simple bearer tokens work for MVP | Medium (token refresh, logout) |
-| Admin dashboard | Not in core flow | High (build React dashboard) |
-
----
-
 ## What I'd Do With More Time
 
 **Security & Production:**
@@ -89,7 +76,7 @@ A complete, production-ready rewards system: partners send activity webhooks →
 
 ## Testing Coverage
 
-✅ **69 passing specs:**
+**69 passing specs:**
 - Webhook processing (idempotency, error cases, multi-partner)
 - Balance calculation (multiple transactions, caching)
 - Redemption (inventory, balance validation, concurrency)
@@ -100,19 +87,3 @@ A complete, production-ready rewards system: partners send activity webhooks →
 - Network failures (not simulated, but HTTP errors tested)
 - UI integration (minimal UI, manual testing sufficient)
 
----
-## Final Thoughts
-
-**Small thing done thoughtfully.** Core flow is solid: webhooks → points → balance → redemption. Each step is tested, idempotent, auditable. Architecture is simple enough for one person to understand and extend.
-
-Spent time on:
-- ✅ Getting the core right (append-only ledger, DB-enforced idempotency)
-- ✅ Testing thoroughly (69 specs covering happy path, errors, edge cases)
-- ✅ Documenting decisions (TECHNICAL_DECISIONS.md explains the "why")
-
-Didn't spend time on:
-- ❌ Over-engineering (no fancy caching, no complex state machines)
-- ❌ Features beyond brief (no fulfillment, no analytics, no admin UI)
-- ❌ Pre-optimization (no indices, no Redis, no background jobs)
-
-Right balance for a take-home and good foundation for production.
