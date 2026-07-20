@@ -9,6 +9,55 @@ RSpec.describe "Rewards", type: :request do
     { "Authorization" => "Bearer user_#{user.id}" }
   end
 
+  describe "GET /rewards" do
+    context "with active rewards" do
+      before do
+        Reward.create!(name: "Free Coffee", description: "Get a free coffee", points_required: 100, active: true)
+        Reward.create!(name: "50% Discount", description: "50% off", points_required: 50, active: true)
+        Reward.create!(name: "Inactive Reward", description: "Not available", points_required: 25, active: false)
+      end
+
+      it "returns all active rewards" do
+        get '/rewards'
+
+        expect(response).to have_http_status(200)
+        rewards = response.parsed_body
+        expect(rewards).to be_an(Array)
+        expect(rewards.length).to eq(2)
+      end
+
+      it "returns reward details" do
+        get '/rewards'
+
+        rewards = response.parsed_body
+        coffee_reward = rewards.find { |r| r["name"] == "Free Coffee" }
+        expect(coffee_reward).to include(
+          "name" => "Free Coffee",
+          "description" => "Get a free coffee",
+          "points_required" => 100
+        )
+        expect(coffee_reward["id"]).to be_present
+      end
+
+      it "does not include inactive rewards" do
+        get '/rewards'
+
+        rewards = response.parsed_body
+        reward_names = rewards.map { |r| r["name"] }
+        expect(reward_names).not_to include("Inactive Reward")
+      end
+    end
+
+    context "with no active rewards" do
+      it "returns empty array" do
+        get '/rewards'
+
+        expect(response).to have_http_status(200)
+        expect(response.parsed_body).to eq([])
+      end
+    end
+  end
+
   describe "POST /rewards/:reward_id/redeem" do
     let(:reward) { Reward.create!(name: "Free Coffee", description: "Get a free coffee", points_required: 100, active: true) }
     let(:inactive_reward) { Reward.create!(name: "Inactive Reward", description: "Not available", points_required: 50, active: false) }

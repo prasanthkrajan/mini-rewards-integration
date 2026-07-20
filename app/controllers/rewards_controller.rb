@@ -1,5 +1,17 @@
 class RewardsController < ActionController::API
-  before_action :authenticate_user!
+  before_action :authenticate_user!, only: :redeem
+
+  def index
+    rewards = Reward.active.map do |reward|
+      {
+        id: reward.id,
+        name: reward.name,
+        description: reward.description,
+        points_required: reward.points_required.to_i
+      }
+    end
+    render json: rewards, status: 200
+  end
 
   def redeem
     reward = Reward.find_by(id: params[:reward_id])
