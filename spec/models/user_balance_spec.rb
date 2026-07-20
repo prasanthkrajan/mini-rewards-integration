@@ -5,6 +5,8 @@ RSpec.describe User do
   let(:other_user) { User.create!(name: "Bob", email: "bob@example.com", password: "bob123") }
   let(:partner) { Partner.create!(name: "Partner A", api_key_digest: BCrypt::Password.create("secret")) }
 
+  before { Rails.cache.clear }
+
   describe "#balance" do
     it "returns 0 for user with no transactions" do
       expect(user.balance).to eq(0)
@@ -94,6 +96,43 @@ RSpec.describe User do
       )
 
       expect(user.balance).to eq(150)
+    end
+
+    it "caches balance and invalidates cache on new transaction" do
+      Transaction.create!(
+        partner_id: partner.id,
+        user_id: user.id,
+        activity_type: "signup",
+        external_id: "evt_001",
+        points_delta: 100,
+        kind: "earn"
+      )
+
+      # First call caches the balance
+      expect(user.balance).to eq(100)
+
+      # Verify cache is set
+      cached = Rails.cache.read("user:#{user.id}:balance")
+      expect(cached).to eq(100)
+
+      # Create new transaction - should invalidate cache
+      Transaction.create!(
+        partner_id: partner.id,
+        user_id: user.id,
+        activity_type: "purchase",
+        external_id: "evt_002",
+        points_delta: 50,
+        kind: "earn"
+      )
+
+      # Cache should be cleared after new transaction
+      cached = Rails.cache.read("user:#{user.id}:balance")
+      expect(cached).to be_nil
+
+      # Next balance call should recalculate and re-cache
+      expect(user.balance).to eq(150)
+      cached = Rails.cache.read("user:#{user.id}:balance")
+      expect(cached).to eq(150)
     end
   end
 end

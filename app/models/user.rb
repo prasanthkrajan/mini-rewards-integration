@@ -7,6 +7,21 @@ class User < ApplicationRecord
   validates :password, presence: true, length: { minimum: 6 }, unless: :persisted?
 
   def balance
-    transactions.sum(:points_delta).to_f.round.to_i
+    cached = Rails.cache.read("user:#{id}:balance")
+    return cached if cached.present?
+
+    calculate_and_cache_balance
+  end
+
+  def update_balance_cache
+    calculate_and_cache_balance
+  end
+
+  private
+
+  def calculate_and_cache_balance
+    balance = transactions.sum(:points_delta).to_f.round.to_i
+    Rails.cache.write("user:#{id}:balance", balance, expires_in: 1.hour)
+    balance
   end
 end

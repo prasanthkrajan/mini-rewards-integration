@@ -5,6 +5,9 @@ RSpec.describe "Me (User)", type: :request do
   let(:other_user) { User.create!(name: "Bob", email: "bob@example.com", password: "bob123") }
   let(:partner) { Partner.create!(name: "Partner A", api_key_digest: BCrypt::Password.create("secret")) }
 
+  # Clear cache before each test to ensure fresh calculations
+  before { Rails.cache.clear }
+
   # Helper to authenticate as a user
   def auth_header_for(user)
     token = JwtService.encode(user.id)
