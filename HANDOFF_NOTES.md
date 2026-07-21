@@ -86,6 +86,7 @@ A complete, production-ready rewards system: partners send activity webhooks →
 - Partner dashboard (view transactions, manage API keys)
 - Seasonal multipliers & promotions (2x points on weekends)
 - Rewards with expiry countdown (UI shows "expires in 3 days"; backend enforces expiry_at)
+- Balance polling (poll `/api/me/balance` every 3-5 seconds to show real-time updates without manual refresh)
 
 **Developer Experience:**
 - Add "Populate Credits" button in dev mode only (localhost); click to credit random user with 100 points (easier than running rake task or script)
