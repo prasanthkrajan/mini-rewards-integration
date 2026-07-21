@@ -40,6 +40,33 @@ bin/rails server
 # Listens on http://localhost:3000
 ```
 
+## Setup (Docker)
+
+Alternatively, use Docker Compose to run the app with all dependencies in containers:
+
+```bash
+docker compose up
+# Listens on http://localhost:3000
+# PostgreSQL runs in the `db` service
+```
+
+The first time you run this, migrations and seeding happen automatically. On subsequent runs, the database persists in a Docker volume.
+
+To run tests in Docker:
+```bash
+docker compose exec web bundle exec rspec
+```
+
+To access the Rails console:
+```bash
+docker compose exec web bundle exec rails console
+```
+
+To tear down and reset the database:
+```bash
+docker compose down -v  # -v removes volumes; next docker compose up re-seeds
+```
+
 ## Running Tests
 
 ```bash
